@@ -13,7 +13,8 @@ def read_config():
 
 # Load configuration
 config = read_config()
-script_path = config.get("Settings", "script_path", fallback="C:\\Users\\micha\\OneDrive\\Documents\\Repositories\\Python\\password\\create_wordlist.py")
+script_path = config.get("Settings", "script_path")
+wlfolder = config.get("Settings", "wordlist_folder")
 
 class MyFrame(wx.Frame):
     def __init__(self):
@@ -71,7 +72,7 @@ class MyFrame(wx.Frame):
 
     def on_load_file(self, event):
         """Open file dialog and load file path into text box"""
-        with wx.FileDialog(self, "Select a word list file", wildcard="Text files (*.txt)|*.txt|All files (*.*)|*.*", style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as file_dialog:
+        with wx.FileDialog(self, "Select a word list file", defaultDir=wlfolder,wildcard="Text files (*.txt)|*.txt|All files (*.*)|*.*", style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as file_dialog:
             if file_dialog.ShowModal() == wx.ID_CANCEL:
                 return  # User canceled
             

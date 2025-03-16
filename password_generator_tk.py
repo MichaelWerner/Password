@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, scrolledtext
 import subprocess
 import os
+import configparser
 
 # Function to read config file
 def read_config():
@@ -14,7 +15,7 @@ def read_config():
 # Load configuration
 config = read_config()
 script_path = config.get("Settings", "script_path")
-
+wlfDir = config.get("Settings", "wordlist_folder")
 
 # Custom window without default title bar
 def move_window(event):
@@ -25,7 +26,7 @@ def close_app():
 
 
 def select_file():
-    filename = filedialog.askopenfilename(filetypes=[("Text files", "wordlist_*.txt"), ("All files", "*.*")])
+    filename = filedialog.askopenfilename(filetypes=[("Text files", "wordlist_*.txt"), ("All files", "*.*")],initialdir=wlfDir)
     if filename:
         file_entry.delete(0, tk.END)
         file_entry.insert(0, filename)
