@@ -1,6 +1,5 @@
 import random
 import sys
-import math
 from zxcvbn import zxcvbn
 
 # Mapping of special characters to their corresponding numbers on a US keyboard
@@ -59,16 +58,18 @@ def load_words_from_file(filename):
         exit()
 
 def generate_memorable_password(words):
-    """Generate a memorable password using words from the loaded list."""
+    #Generate a memorable password using words from the loaded list.
     special_chars = ["!","@", "#", "$", "%", "^", "&", "*", "(", ")"]
-    num4 = str(random.randint(1000, 9999))
     
     # Pick two random words
     word1 = random.choice(words)
     word2 = random.choice(words)
+    word3 = random.choice(words)
+
     # Ensure words are different
-    while word1 == word2:
+    while word1 == word2 or word1 == word3 or word2 == word3:
         word2 = random.choice(words)
+        word3 = random.choice(words)
     
     # Iterate over indices that correspond to every third letter
     for i in range(2, len(word1), 3):
@@ -81,16 +82,62 @@ def generate_memorable_password(words):
             # Rebuild the string by slicing before, adding the replacement, and slicing after.
             word2 = word2[:i] + vowel_map[word2[i]] + word2[i+1:]
 
+    for i in range(2, len(word3), 3):
+        if word3[i] in vowel_map:
+            # Rebuild the string by slicing before, adding the replacement, and slicing after.
+            word3 = word3[:i] + vowel_map[word3[i]] + word3[i+1:]            
+    
+    
     # Assemble the password
-    if len(word1) >= 10:
-        full_password = f"{word1}{random.choice(special_chars)}{num4}"
-    elif len(word2) >= 10:
-        full_password = f"{word2}{random.choice(special_chars)}{num4}" 
+    if len(word1) + len(word2) >= 15:
+        full_password = f"{word1}{random.choice(special_chars)}{word2}"
+    elif len(word1) + len(word3) >= 15:
+        full_password = f"{word1}{random.choice(special_chars)}{word3}"
+    elif len(word2) + len(word3) >= 15:
+        full_password = f"{word2}{random.choice(special_chars)}{word3}"
     else:
-        full_password = f"{word1}{random.choice(special_chars)}{word2}{random.choice(special_chars)}{num4}" 
+        full_password = f"{word1}{random.choice(special_chars)}{word2}{random.choice(special_chars)}{word3}" 
+
+    # Ensure there is at least one upper case, one lowe case letter and one number in the password
+    hasUpper = False
+    hasLower = False
+    hasDigit = False
+    
+    for char in full_password:
+        if char.isupper():
+            hasUpper = True
+
+        if char.islower():
+            hasLower = True
+
+        if char.isdigit():
+            hasDigit = True
+
+    if not hasDigit:
+        full_password = random_digit(full_password)
+
+    if not hasUpper:
+        full_password = random_upper_or_lower(full_password,True)
+    
+    if not hasLower:
+        full_password = random_upper_or_lower(full_password,False)
 
     return full_password
 
+def random_digit(full_password):
+    pos = random.randint(0, len(full_password) - 2)
+    return full_password[:pos + 1] + str(pos) + full_password[pos + 1:]
+
+def random_upper_or_lower(full_password,convert_to_upper):
+    
+    pos = random.randint(0, len(full_password) -1)
+    while not full_password[pos].isalpha():
+        pos = random.randint(0, len(full_password) -1)
+
+    if convert_to_upper:
+        return full_password[:pos] + full_password[pos].upper() + full_password[pos + 1:]  
+    else:
+        return full_password[:pos] + full_password[pos].lower() + full_password[pos + 1:]  
 
 def truncate_password(full_password):
     # Replace special characters with corresponding numbers
@@ -98,10 +145,21 @@ def truncate_password(full_password):
         full_password = full_password.replace(char, special_char_map[char])
 
     """Truncate password for second system compliance."""
-    truncated = ''.join(char for char in full_password if char.isalnum())[:10]
+    truncated = full_password[:10]
+
     # Ensure the last character is not a number
     if truncated[-1].isdigit():
         truncated = truncated[:-1] + reverse_vowel_map[truncated[-1]]  # Replace with a letter
+
+    hasDigit = False
+
+    for char in truncated:
+        if char.isdigit():
+            hasDigit = True
+
+    if not hasDigit:
+        truncated = random_digit(truncated)
+
     return truncated
 
 def generate_password_pairs(words, count=10):
@@ -126,7 +184,7 @@ def format_time(seconds):
     )
     result = []
     for name, count in intervals:
-        value = int(seconds // count)
+        value = int(seconds / count)
         if value:
             result.append(f"{value} {name}")
             seconds -= value * count
@@ -150,8 +208,8 @@ def main():
         online_time_seconds_full = time_full['crack_times_seconds'].get('online_no_throttling_10_per_second', None)
         online_time_seconds_trunc = time_trunc['crack_times_seconds'].get('online_no_throttling_10_per_second', None)
 
-        print(f"Full: {full} (crack time: {format_time(online_time_seconds_full)})")
-        print(f"Truncated: {truncated} (crack time: {format_time(online_time_seconds_trunc)})")
+        print(f"Full: {full} (length: {len(full)}, crack time: {format_time(online_time_seconds_full)})")
+        print(f"Truncated: {truncated} (length: {len(truncated)}, crack time: {format_time(online_time_seconds_trunc)})")
         print(" ")
 
 if __name__ == "__main__":
